@@ -1,0 +1,64 @@
+<!--
+   ================================================================
+   Bookcase XML DTD version 2.0
+
+   $Id: bookcase.dtd,v 1.11 2003/03/17 05:42:46 robby Exp $
+
+   Copyright (c) 2002 Robby Stephenson
+
+   This DTD is designed to be used with XML data files for the 
+   'bookcase' application, which can be found at:
+   http://periapsis.org/bookcase/
+
+   The formal public identifer for this DTD should be:
+   
+      "-//Robby Stephenson/DTD Bookcase V2.0//EN"
+
+   ================================================================
+-->
+<!ELEMENT bookcase (collection+)>
+<!ATTLIST bookcase version CDATA #REQUIRED>
+<!ELEMENT collection (attributes*, book*)>
+<!ATTLIST collection title CDATA #REQUIRED>
+<!ATTLIST collection unit CDATA #REQUIRED>
+<!ATTLIST collection unitTitle CDATA #IMPLIED>
+<!ELEMENT attributes (attribute+)>
+<!ELEMENT attribute EMPTY>
+<!ATTLIST attribute name CDATA #REQUIRED>
+<!ATTLIST attribute title CDATA #REQUIRED>
+<!ATTLIST attribute group CDATA #REQUIRED>
+<!ATTLIST attribute allowed CDATA #IMPLIED>
+<!ATTLIST attribute flags CDATA #IMPLIED>
+<!ATTLIST attribute description CDATA #IMPLIED>
+<!ATTLIST attribute type (1|2|3|4|5|6) #IMPLIED> 
+<!ELEMENT book (title?, subtitle?, authors?, binding?, pur_date?, pur_price?, publisher?, edition?, cr_years?, pub_year?, isbn?, lccn?, pages?, languages?, genres?, keywords?, series?, series_num?, condition?, signed?, read?, gift?, loaned?, rating?, comments?)>
+<!ELEMENT title (#PCDATA)>
+<!ELEMENT subtitle (#PCDATA)>
+<!ELEMENT authors (author+)>
+<!ELEMENT author (#PCDATA)>
+<!ELEMENT binding (#PCDATA)>
+<!ELEMENT pur_date (#PCDATA)>
+<!ELEMENT pur_price (#PCDATA)>
+<!ELEMENT publisher (#PCDATA)>
+<!ELEMENT edition (#PCDATA)>
+<!ELEMENT cr_years (cr_year+)>
+<!ELEMENT cr_year (#PCDATA)>
+<!ELEMENT pub_year (#PCDATA)>
+<!ELEMENT isbn (#PCDATA)>
+<!ELEMENT lccn (#PCDATA)>
+<!ELEMENT pages (#PCDATA)>
+<!ELEMENT languages (language+)>
+<!ELEMENT language (#PCDATA)>
+<!ELEMENT genres (genre+)>
+<!ELEMENT genre (#PCDATA)>
+<!ELEMENT keywords (keyword+)>
+<!ELEMENT keyword (#PCDATA)>
+<!ELEMENT series (#PCDATA)>
+<!ELEMENT series_num (#PCDATA)>
+<!ELEMENT condition (#PCDATA)>
+<!ELEMENT signed EMPTY>
+<!ELEMENT read EMPTY>
+<!ELEMENT gift EMPTY>
+<!ELEMENT rating (#PCDATA)>
+<!ELEMENT loaned EMPTY>
+<!ELEMENT comments (#PCDATA)>
