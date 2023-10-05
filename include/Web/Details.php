@@ -5,14 +5,15 @@ namespace Tellico\Web;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Exception as E;
-
+use Tellico\Template;
+use Tellico\Data\File as Datafile;
 
 class Details {
-    private $container;
 
-    public function __construct (ContainerInterface $container) {
-        $this->container = $container;
-    }
+    public function __construct (
+        private ContainerInterface $container,
+        private Template $template
+    ) {}
 
     public function __invoke (ResponseInterface $response, string $database, string $entry): ResponseInterface {
         // your code to access items in the container... $this->container->get('');
@@ -35,7 +36,7 @@ class Details {
         $body->write("<h1>Details of $title</h1><ul>");
         $afb = null;
         foreach ($entry->children() as $k => $v) {
-            if ($k == 'afbeelding' && $v) $afb = $v;
+            if (($k == 'cover' || $k == 'afbeelding') && $v) $afb = $v; # @todo make selection of image automagic
             $body->write(sprintf('<li>%s: %s</li>', $k, $v));
         }
         $body->write('</ul>');

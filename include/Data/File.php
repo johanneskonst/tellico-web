@@ -10,8 +10,11 @@ class File {
     private string $filename;
     private ZipArchive $za;
     private SimpleXMLElement $tx;
-    private int $sz;
-    private int $mt;
+    private Collection $collection;
+    private array $fields = [];
+    private array $entries = [];
+    private array $images = [];
+    private array $borrowers = [];
 
     public function __construct(string $filename) {
         $this->filename = $filename;
@@ -21,18 +24,93 @@ class File {
         // <glob pattern="*.tc"/>
         // <glob pattern="*.bc"/>
         if (!is_readable($this->filename) || !is_file($this->filename)) throw new E('not a readable file');
-        if ('application/zip' !== mime_content_type($this->filename)) throw new E('not a tellico file');
+        if ('application/zip' !== mime_content_type($this->filename) || !$this->openFile()) throw new E('not a valid tellico file');
+        $this->loadDefinition();
+    }
+
+    private function openFile () {
         $this->za = new ZipArchive;
-        $this->za->open($this->filename, ZipArchive::RDONLY);
-        $t = $this->za->statName('tellico.xml');
-        if (false !== $t && is_array($t) && isset($t['size'])) {
-            $this->sz = $t['size'];
-            $this->mt = $t['mtime'];
-        }
-        else {
+        if (true !== $this->za->open($this->filename, ZipArchive::RDONLY)) return false;
+        if (false === $this->za->statName('tellico.xml')) {
             $this->za->close();
-            throw new E('not a real tellico file');
+            return false;
         }
+        return true;
+    }
+
+    private function loadDefinition() {
+        $this->tx = simplexml_load_string($this->za->getFromName('tellico.xml'));
+        foreach ($this->tx->collection->fields->field as $xf) {
+            $properties = [];
+            foreach ($xf->prop as $p) {
+                $properties[(string) $p['name']] = (string) $p;
+            }
+            $f = new Field(
+                (string) $xf['name'],
+                (string) $xf['title'],
+                (string) $xf['description'],
+                (int) $xf['type'],
+                (int) $xf['format'],
+                (string) $xf['category'],
+                (int) $xf['flags'],
+                $properties
+            );
+            $this->fields[$f->getName()] = $f;
+        }
+        foreach ($this->tx->collection->entry as $xe) {
+            $fields = $values = [];
+            foreach ($this->fields as $fieldName => $field) {
+                if (Field::FORMAT_DATE == $field->getFormat()) {
+                    $fieldValue = (int) $xe->$fieldName->year . '-'
+                                . (int) $xe->$fieldName->month . '-'
+                                . (int) $xe->$fieldName->day;
+                }
+                else {
+                    $fieldValue = (string) $xe->$fieldName;
+                }
+                $fields[] = $fieldName;
+                $values[$fieldName] = $fieldValue;
+            }
+            $e = new Entry(
+                (int) $xe['id'],
+                (string) $xe->title,
+                $fields,
+                $values
+            );
+            $this->entries[$e->getId()] = $e;
+        }
+        foreach ($this->tx->collection->images->image as $xi) {
+            $i = new Image(
+                (string) $xi['id'],
+                (int) $xi['width'],
+                (int) $xi['height'],
+                (string) $xi['format']
+            );
+            $this->images[$i->getId()] = $i;
+        }
+        $this->collection = new Collection(
+            (string) $this->tx->collection['title'],
+            (int) $this->tx->collection['type'],
+            $this->fields,
+            $this->entries,
+            $this->images,
+            $this->borrowers
+        );
+    }
+
+    public function isContained() {
+        return (!is_dir(dirname($this->filename) . '/' . basename($this->filename, '.tc') . '_files'));
+    }
+
+    public function getCollection() {
+        return $this->collection;
+    }
+
+    public function getFile($filename) {
+        if ($this->za->statName($filename) !== false) {
+            return $this->za->getFromName($filename);
+        }
+        return false;
     }
 
     public function getName($suffix = '') {
@@ -40,7 +118,7 @@ class File {
     }
 
     public function getSize() {
-        return $this->sz;
+        return filesize($this->filename);
     }
 
     public function getFormattedSize() {
@@ -56,16 +134,11 @@ class File {
     }
 
     public function getModified() {
-        return $this->mt;
+        return filemtime($this->filename);
     }
 
     public function getFormattedModified() {
         return date(DATE_RFC7231, $this->getModified());
-    }
-
-    public function loadDefinition() {
-        $this->tx = simplexml_load_string($this->za->getFromName('tellico.xml'));
-        return $this->tx;
     }
 
     public function __destruct() {

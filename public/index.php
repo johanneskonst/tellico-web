@@ -2,18 +2,22 @@
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-#use Slim\Factory\AppFactory;
 use DI\Bridge\Slim\Bridge as AppFactory;
 use Dotenv\Dotenv as Env;
+
+define ('T', microtime(true));
 
 require __DIR__ . '/../vendor/autoload.php';
 
 try {
+    if (php_sapi_name() == 'cli-server' && preg_match('#^/assets.*$#Ui', $_SERVER["REQUEST_URI"])) return false;
 
-    $env = Env::createImmutable(__DIR__ . '/../');
+    define('APP_ROOT', __DIR__);
+
+    $env = Env::createImmutable(APP_ROOT . '/../');
     $env->load();
     $env->required(['BASE_PATH', 'AUTH_TOKEN', 'DEBUG']);
-    $env->required(['DATA_DIR', 'DTD_DIR'])->notEmpty();
+    $env->required(['DATA_DIR', 'DTD_DIR', 'TEMPLATE_DIR'])->notEmpty();
 
     $app = AppFactory::create();
     $app->setBasePath($_ENV['BASE_PATH']);

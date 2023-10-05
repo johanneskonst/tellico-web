@@ -5,24 +5,25 @@ namespace Tellico\Web;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Exception as E;
+use Tellico\Template;
+use Tellico\Data\File as Datafile;
 
 class Overview {
-    private $container;
 
-    public function __construct (ContainerInterface $container) {
-        $this->container = $container;
-    }
+    public function __construct (
+        private ContainerInterface $container,
+        private Template $template
+    ) {}
 
     public function __invoke (ResponseInterface $response): ResponseInterface {
         // your code to access items in the container... $this->container->get('');
         $files = glob($_ENV['DATA_DIR'] . '/*.tc');
-        $body = $response->getBody();
-        $body->write("<h1>Overview</h1><ul>");
+        $datafiles = [];
         foreach ($files as $file) {
-            $file = new \Tellico\Data\File($file);
-            $body->write(sprintf('<li><a href="%s/%s">%s</a> <i>(%s %s)</i></li>', $_ENV['BASE_PATH'], $file->getName('.tc'), $file->getName(), $file->getFormattedSize(), $file->getFormattedModified()));
+            $datafiles[] = new Datafile($file);
         }
-        $body->write('</ul>');
+        $this->template->setDatafiles($datafiles);
+        $response->getBody()->write($this->template->getOverview());
         return $response;
     }
 }

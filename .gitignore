@@ -9,5 +9,5 @@ Homestead.json
 /.vagrant
 .phpunit.result.cache
 
-/datafiles/*
+/var/data/*
 /tmp/
